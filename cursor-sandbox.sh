@@ -80,6 +80,15 @@ if [ -S "$XDG_DIR/bus" ]; then
     FIREJAIL_ARGS+=(--whitelist="$XDG_DIR/bus")
 fi
 
+# Audio server socket (needed for voice prompting / microphone)
+if [ -d "$XDG_DIR/pulse" ]; then
+    echo "  Audio:     PulseAudio"
+    FIREJAIL_ARGS+=(--whitelist="$XDG_DIR/pulse")
+elif [ -S "$XDG_DIR/pipewire-0" ]; then
+    echo "  Audio:     PipeWire"
+    FIREJAIL_ARGS+=(--whitelist="$XDG_DIR/pipewire-0")
+fi
+
 # Mount container socket if available (detected at launch time)
 if [ -S "/run/user/$USER_ID/podman/podman.sock" ]; then
     echo "  Podman socket: found"
