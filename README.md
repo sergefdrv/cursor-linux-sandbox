@@ -48,11 +48,19 @@ To override defaults, pass env vars:
 CURSOR_APPIMAGE=/path/to/Cursor.AppImage WORKSPACE_DIR=$HOME/repos ./cursor-sandbox-setup.sh
 ```
 
+## Desktop integration
+
+Setup installs desktop integration by default: a "Cursor" entry in your app menu (under `~/.local/share/applications/`), a launcher symlink at `~/.local/bin/cursor` (so the desktop file works even when the repo path contains spaces), and, if **7z** (p7zip-full) is available, the application icon under `~/.local/share/icons/hicolor/`. If 7z is not installed, the desktop entry is still created but without an icon (you can continue without it, or install p7zip-full and re-run setup to get the icon). To skip desktop integration, run setup with `--no-desktop`.
+
 ## Usage
+
+From the repo directory:
 
 ```bash
 ./cursor-sandbox.sh
 ```
+
+Or run `cursor` from anywhere if `~/.local/bin` is in your PATH (setup creates a symlink there when desktop integration is enabled).
 
 On each launch, the script checks `~/Downloads` for a newer `Cursor-*.AppImage`. If one is found, you're prompted to install it.
 
@@ -69,7 +77,7 @@ Anything you launch this way actually executes on the host as your real user, ou
 
 ## Files
 
-- `cursor-sandbox-setup.sh` -- one-time setup: validates prerequisites, writes config
+- `cursor-sandbox-setup.sh` -- one-time setup: validates prerequisites, writes config, optionally installs desktop entry and `~/.local/bin/cursor` symlink
 - `cursor-sandbox.sh` -- launcher: checks for updates, starts firejail
 - `cursor.firejail.profile` -- firejail security profile (whitelist, seccomp, caps)
 - `.cursor-sandbox.env` -- generated config (gitignored)
