@@ -16,9 +16,14 @@ SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 CONFIG_FILE="${SCRIPT_DIR}/.cursor-sandbox.env"
 
 if [ ! -f "$CONFIG_FILE" ]; then
-    echo "Error: Config file not found at: $CONFIG_FILE"
-    echo "Run setup first:  ./cursor-sandbox-setup.sh"
-    exit 1
+    echo "Config file not found at: $CONFIG_FILE"
+    echo "Running setup automatically..."
+    "$SCRIPT_DIR/cursor-sandbox-setup.sh"
+    # After setup, check again
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo "Error: Setup failed to generate config file."
+        exit 1
+    fi
 fi
 
 source "$CONFIG_FILE"
