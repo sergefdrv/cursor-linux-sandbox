@@ -11,6 +11,8 @@ noblacklist ${HOME}/.config/Cursor
 noblacklist ${HOME}/.local/share/Cursor
 noblacklist ${HOME}/.cache/Cursor
 noblacklist ${HOME}/.gitconfig
+noblacklist ${HOME}/.cargo
+noblacklist ${HOME}/.rustup
 
 # --- Standard blacklist includes ---
 # These block access to sensitive dirs: ~/.ssh, ~/.gnupg, ~/.pki,
@@ -28,6 +30,12 @@ whitelist ${HOME}/.cache/Cursor
 # Git config (visible but read-only)
 whitelist ${HOME}/.gitconfig
 read-only ${HOME}/.gitconfig
+
+# Rust/Cargo (for cargo, rustc in terminal; read-only — run cargo fetch/rustup outside sandbox)
+whitelist ${HOME}/.cargo
+read-only ${HOME}/.cargo
+whitelist ${HOME}/.rustup
+read-only ${HOME}/.rustup
 
 # --- Security hardening ---
 
