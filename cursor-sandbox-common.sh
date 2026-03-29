@@ -11,6 +11,11 @@ get_newest_cursor_appimage_in_dir() {
     ls -t "$1"/Cursor-*.AppImage 2>/dev/null | head -1
 }
 
+# Extract semver from an AppImage filename: Cursor-0.48.6-linux-x86_64.AppImage -> 0.48.6
+get_appimage_version() {
+    basename "${1:-}" | grep -oP '(?<=Cursor-)\d+\.\d+\.\d+'
+}
+
 # Install AppImage from path into APPIMAGE_DIR. Prints new path.
 install_appimage_to_dir() {
     local src="$1"

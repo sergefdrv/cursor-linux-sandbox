@@ -36,9 +36,11 @@ source "$CONFIG_FILE"
 # ── Check ~/Downloads for a newer AppImage ────────────────────────────
 dl_newest="$(get_newest_cursor_appimage_in_dir "$DOWNLOADS_DIR")"
 if [ -n "$dl_newest" ] && [ "$dl_newest" -nt "$CURSOR_APPIMAGE" ]; then
+    _ver_old="$(get_appimage_version "$CURSOR_APPIMAGE")"
+    _ver_new="$(get_appimage_version "$dl_newest")"
+    _ver_summary="Installed: ${_ver_old:-none}  —  Found in Downloads: $_ver_new"
     if [[ -t 0 ]]; then
-        echo "New Cursor version found in Downloads:"
-        echo "  $(basename "$dl_newest")"
+        echo "$_ver_summary"
         read -rp "Install and launch it? [Y/n] " answer
         if [[ -z "$answer" || "$answer" =~ ^[Yy] ]]; then
             CURSOR_APPIMAGE="$(install_appimage_to_dir "$dl_newest")"
@@ -46,7 +48,7 @@ if [ -n "$dl_newest" ] && [ "$dl_newest" -nt "$CURSOR_APPIMAGE" ]; then
             source "$CONFIG_FILE"
         fi
     else
-        notify-send "Cursor" "A newer Cursor version was found in Downloads. Run $(basename "$0") from a terminal to install it." 2>/dev/null || true
+        notify-send "Cursor Update" "$_ver_summary. Run cursor from a terminal to install." 2>/dev/null || true
     fi
 fi
 
