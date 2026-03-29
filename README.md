@@ -57,7 +57,7 @@ Run `cursor` from anywhere (if `~/.local/bin` is in your PATH), or from the repo
 
 Both use the same config in `~/.local/opt/cursor-sandbox/`.
 
-On each launch, the launcher checks `~/Downloads` for a newer `Cursor-*.AppImage`. If one is found, you're prompted to install it.
+On each launch the launcher checks `~/Downloads` for a newer `Cursor-*.AppImage`; if found, you're prompted to install it — via a terminal prompt or, from the desktop, a `zenity`/`kdialog` dialog (falls back to a notification if neither is available).
 
 ## Docker / Podman
 

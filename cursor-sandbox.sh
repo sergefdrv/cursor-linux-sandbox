@@ -39,14 +39,19 @@ if [ -n "$dl_newest" ] && [ "$dl_newest" -nt "$CURSOR_APPIMAGE" ]; then
     _ver_old="$(get_appimage_version "$CURSOR_APPIMAGE")"
     _ver_new="$(get_appimage_version "$dl_newest")"
     _ver_summary="Installed: ${_ver_old:-none}  —  Found in Downloads: $_ver_new"
+    _do_install() {
+        CURSOR_APPIMAGE="$(install_appimage_to_dir "$dl_newest")"
+        write_cursor_sandbox_config
+        source "$CONFIG_FILE"
+    }
     if [[ -t 0 ]]; then
         echo "$_ver_summary"
         read -rp "Install and launch it? [Y/n] " answer
-        if [[ -z "$answer" || "$answer" =~ ^[Yy] ]]; then
-            CURSOR_APPIMAGE="$(install_appimage_to_dir "$dl_newest")"
-            write_cursor_sandbox_config
-            source "$CONFIG_FILE"
-        fi
+        [[ -z "$answer" || "$answer" =~ ^[Yy] ]] && _do_install
+    elif command -v zenity &>/dev/null && zenity --question --title="Cursor Update" --text="$_ver_summary\n\nInstall and launch it?" 2>/dev/null; then
+        _do_install
+    elif command -v kdialog &>/dev/null && kdialog --yesno "$_ver_summary\n\nInstall and launch it?" --title "Cursor Update" 2>/dev/null; then
+        _do_install
     else
         notify-send "Cursor Update" "$_ver_summary. Run cursor from a terminal to install." 2>/dev/null || true
     fi
