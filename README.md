@@ -29,40 +29,35 @@ sudo pacman -S firejail      # Arch
 
 ## Setup
 
-Place your Cursor AppImage in `~/.local/opt/cursor/`:
-
-```bash
-mkdir -p ~/.local/opt/cursor
-mv ~/Downloads/Cursor-*.AppImage ~/.local/opt/cursor/
-```
-
-Run setup once -- it will auto-detect the AppImage and ask for your workspace directory:
+Run setup once:
 
 ```bash
 ./cursor-sandbox-setup.sh
 ```
 
-To override defaults, pass env vars:
+On first run, setup will prompt for your workspace directory. You can also put the AppImage in `~/.local/opt/cursor/` beforehand, or set `CURSOR_APPIMAGE` when running setup.
+
+Setup installs the launcher and config outside the workspace (so the sandbox cannot modify them): config and profile in `~/.local/opt/cursor-sandbox/`, launcher at `~/.local/bin/cursor`. Re-run setup after pulling changes to update the installed copy.
+
+Override defaults:
 
 ```bash
 CURSOR_APPIMAGE=/path/to/Cursor.AppImage WORKSPACE_DIR=$HOME/repos ./cursor-sandbox-setup.sh
 ```
 
-## Desktop integration
-
-Setup installs desktop integration by default: a "Cursor" entry in your app menu (under `~/.local/share/applications/`), a launcher symlink at `~/.local/bin/cursor` (so the desktop file works even when the repo path contains spaces), and, if **7z** (p7zip-full) is available, the application icon under `~/.local/share/icons/hicolor/`. If 7z is not installed, the desktop entry is still created but without an icon (you can continue without it, or install p7zip-full and re-run setup to get the icon). To skip desktop integration, run setup with `--no-desktop`.
+**Desktop integration** (on by default, use `--no-desktop` to skip): adds a "Cursor" entry in your app menu (`~/.local/share/applications/`) and, if **7z** (p7zip-full) is available, the application icon. Without 7z the entry is created without an icon.
 
 ## Usage
 
-From the repo directory:
+Run `cursor` from anywhere (if `~/.local/bin` is in your PATH), or from the repo:
 
 ```bash
 ./cursor-sandbox.sh
 ```
 
-Or run `cursor` from anywhere if `~/.local/bin` is in your PATH (setup creates a symlink there when desktop integration is enabled).
+Both use the same config in `~/.local/opt/cursor-sandbox/`.
 
-On each launch, the script checks `~/Downloads` for a newer `Cursor-*.AppImage`. If one is found, you're prompted to install it.
+On each launch, the launcher checks `~/Downloads` for a newer `Cursor-*.AppImage`. If one is found, you're prompted to install it.
 
 ## Docker / Podman
 
@@ -77,14 +72,13 @@ Anything you launch this way actually executes on the host as your real user, ou
 
 ## Files
 
-- `cursor-sandbox-setup.sh` -- one-time setup: validates prerequisites, writes config, optionally installs desktop entry and `~/.local/bin/cursor` symlink
-- `cursor-sandbox.sh` -- launcher: checks for updates, starts firejail
-- `cursor.firejail.profile` -- firejail security profile (whitelist, seccomp, caps)
-- `.cursor-sandbox.env` -- generated config (gitignored)
+- `cursor-sandbox-setup.sh` -- one-time setup: installs launcher and config to `~/.local/opt/cursor-sandbox/` and `~/.local/bin/cursor`; optionally adds desktop entry (use `--no-desktop` to skip)
+- `cursor-sandbox.sh` -- launcher: reads config from `~/.local/opt/cursor-sandbox/`, checks for updates, starts firejail
+- `cursor.firejail.profile` -- firejail security profile (copied into `~/.local/opt/cursor-sandbox/` by setup)
 
 ## Troubleshooting
 
-**Cursor doesn't start** -- check `firejail --version`, verify the AppImage path in `.cursor-sandbox.env`, look for errors in terminal output.
+**Cursor doesn't start** -- check `firejail --version`, verify the AppImage path in `~/.local/opt/cursor-sandbox/.cursor-sandbox.env`, look for errors in terminal output.
 
 **Wayland issues** -- the launcher whitelists `$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY`; if your compositor uses a non-default name (or doesn't export `WAYLAND_DISPLAY` at all), the launcher will silently drop Wayland passthrough. Find the real socket with `ls $XDG_RUNTIME_DIR/wayland-*` and re-export `WAYLAND_DISPLAY` accordingly.
 

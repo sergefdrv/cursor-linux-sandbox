@@ -13,16 +13,20 @@ set -e
 # ── Load config ──────────────────────────────────────────────────────
 SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
-source "$SCRIPT_DIR/cursor-sandbox-common.sh"
-CONFIG_FILE="${SCRIPT_DIR}/.cursor-sandbox.env"
+if [ -f "$SCRIPT_DIR/cursor-sandbox-common.sh" ]; then
+    source "$SCRIPT_DIR/cursor-sandbox-common.sh"
+else
+    source "$HOME/.local/opt/cursor-sandbox/cursor-sandbox-common.sh"
+fi
 
 if [ ! -f "$CONFIG_FILE" ]; then
-    echo "Config file not found at: $CONFIG_FILE"
-    echo "Running setup automatically..."
-    "$SCRIPT_DIR/cursor-sandbox-setup.sh"
-    # After setup, check again
-    if [ ! -f "$CONFIG_FILE" ]; then
-        echo "Error: Setup failed to generate config file."
+    if [ -f "$SCRIPT_DIR/cursor-sandbox-setup.sh" ]; then
+        echo "Config not found. Running setup..."
+        "$SCRIPT_DIR/cursor-sandbox-setup.sh"
+        [ -f "$CONFIG_FILE" ] || { echo "Error: Setup failed to create config."; exit 1; }
+    else
+        echo "Config not found at: $CONFIG_FILE"
+        echo "Run cursor-sandbox-setup.sh from the repo to install."
         exit 1
     fi
 fi

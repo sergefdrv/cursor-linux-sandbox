@@ -3,6 +3,8 @@
 # Source this file; do not run directly.
 
 APPIMAGE_DIR="$HOME/.local/opt/cursor"
+INSTALL_DIR="$HOME/.local/opt/cursor-sandbox"
+CONFIG_FILE="$INSTALL_DIR/.cursor-sandbox.env"
 DOWNLOADS_DIR="${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
 
 get_newest_cursor_appimage_in_dir() {

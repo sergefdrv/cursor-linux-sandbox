@@ -14,7 +14,6 @@ set -e
 SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 source "$SCRIPT_DIR/cursor-sandbox-common.sh"
-CONFIG_FILE="${SCRIPT_DIR}/.cursor-sandbox.env"
 
 # Desktop integration (on by default; use --no-desktop to skip)
 DESKTOP_INTEGRATION=true
@@ -31,7 +30,7 @@ if [ -z "$WORKSPACE_DIR" ]; then
     WORKSPACE_DIR="${WORKSPACE_DIR:-$HOME/proj}"
 fi
 
-PROFILE="${SCRIPT_DIR}/cursor.firejail.profile"
+REPO_PROFILE="${SCRIPT_DIR}/cursor.firejail.profile"
 
 # ── Check prerequisites ──────────────────────────────────────────────
 if ! command -v firejail &> /dev/null; then
@@ -42,8 +41,8 @@ if ! command -v firejail &> /dev/null; then
     exit 1
 fi
 
-if [ ! -f "$PROFILE" ]; then
-    echo "Error: Firejail profile not found at: $PROFILE"
+if [ ! -f "$REPO_PROFILE" ]; then
+    echo "Error: Firejail profile not found at: $REPO_PROFILE"
     echo "Ensure cursor.firejail.profile is in the same directory as this script."
     exit 1
 fi
@@ -61,6 +60,8 @@ WORKSPACE_DIR="$(readlink -f "$WORKSPACE_DIR")"
 
 # ── Create required directories ───────────────────────────────────────
 mkdir -p "$APPIMAGE_DIR" \
+         "$INSTALL_DIR" \
+         "$HOME/.local/bin" \
          "$HOME/.cursor" \
          "$HOME/.cursor-server" \
          "$HOME/.config/Cursor" \
@@ -68,10 +69,19 @@ mkdir -p "$APPIMAGE_DIR" \
          "$HOME/.cache/Cursor" \
          "$WORKSPACE_DIR"
 
-# ── Write config file ────────────────────────────────────────────────
+# ── Install launcher and config outside workspace (sandbox cannot modify) ─
+cp "$REPO_PROFILE" "$INSTALL_DIR/cursor.firejail.profile"
+cp "$SCRIPT_DIR/cursor-sandbox-common.sh" "$INSTALL_DIR/"
+PROFILE="$INSTALL_DIR/cursor.firejail.profile"
 write_cursor_sandbox_config
+CURSOR_SANDBOX_CMD="$HOME/.local/bin/cursor"
+cp "$SCRIPT_DIR/cursor-sandbox.sh" "$CURSOR_SANDBOX_CMD"
+chmod +x "$CURSOR_SANDBOX_CMD"
 
-# ── Optional desktop integration ────────────────────────────────────
+echo "Config:  $CONFIG_FILE"
+echo "Launcher: $CURSOR_SANDBOX_CMD (re-run setup to update)"
+
+# ── Optional desktop integration ──────────────────────────────────────
 if [[ "$DESKTOP_INTEGRATION" == "true" ]]; then
     APPLICATIONS_DIR="$HOME/.local/share/applications"
     ICONS_DIR="$HOME/.local/share/icons/hicolor"
@@ -112,11 +122,6 @@ if [[ "$DESKTOP_INTEGRATION" == "true" ]]; then
         gtk-update-icon-cache -f -t "$ICONS_DIR" 2>/dev/null || true
     fi
 
-    # Symlink launcher into ~/.local/bin so the desktop file can use a path without spaces
-    mkdir -p "$HOME/.local/bin"
-    ln -sf "$SCRIPT_DIR/cursor-sandbox.sh" "$HOME/.local/bin/cursor"
-    CURSOR_SANDBOX_CMD="$HOME/.local/bin/cursor"
-
     mkdir -p "$APPLICATIONS_DIR"
     cat > "$APPLICATIONS_DIR/cursor.desktop" <<DESKTOP
 [Desktop Entry]
@@ -144,11 +149,11 @@ DESKTOP
         update-desktop-database "$APPLICATIONS_DIR" 2>/dev/null || true
     fi
 
-    echo "Desktop entry installed: $APPLICATIONS_DIR/cursor.desktop"
-    echo "Launcher symlink: $CURSOR_SANDBOX_CMD"
+    echo "Desktop entry: $APPLICATIONS_DIR/cursor.desktop"
 fi
 
-echo "Setup complete. Config written to: $CONFIG_FILE"
+echo ""
+echo "Setup complete."
 echo "  AppImage:  $CURSOR_APPIMAGE"
 echo "  Workspace: $WORKSPACE_DIR"
 echo "  Profile:   $PROFILE"
