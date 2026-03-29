@@ -13,6 +13,7 @@ set -e
 # ── Load config ──────────────────────────────────────────────────────
 SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+source "$SCRIPT_DIR/cursor-sandbox-common.sh"
 CONFIG_FILE="${SCRIPT_DIR}/.cursor-sandbox.env"
 
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -29,24 +30,15 @@ fi
 source "$CONFIG_FILE"
 
 # ── Check ~/Downloads for a newer AppImage ────────────────────────────
-APPIMAGE_DIR="$HOME/.local/opt/cursor"
-DOWNLOADS_DIR="${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
-
-dl_newest="$(ls -t "$DOWNLOADS_DIR"/Cursor-*.AppImage 2>/dev/null | head -1)"
-
+dl_newest="$(get_newest_cursor_appimage_in_dir "$DOWNLOADS_DIR")"
 if [ -n "$dl_newest" ] && [ "$dl_newest" -nt "$CURSOR_APPIMAGE" ]; then
     if [[ -t 0 ]]; then
         echo "New Cursor version found in Downloads:"
         echo "  $(basename "$dl_newest")"
         read -rp "Install and launch it? [Y/n] " answer
         if [[ -z "$answer" || "$answer" =~ ^[Yy] ]]; then
-            mkdir -p "$APPIMAGE_DIR"
-            mv "$dl_newest" "$APPIMAGE_DIR/"
-            # Re-run setup to regenerate config with the new AppImage
-            CURSOR_APPIMAGE="$APPIMAGE_DIR/$(basename "$dl_newest")" \
-            WORKSPACE_DIR="$WORKSPACE_DIR" \
-                "$SCRIPT_DIR/cursor-sandbox-setup.sh"
-            # Reload updated config
+            CURSOR_APPIMAGE="$(install_appimage_to_dir "$dl_newest")"
+            write_cursor_sandbox_config
             source "$CONFIG_FILE"
         fi
     else
