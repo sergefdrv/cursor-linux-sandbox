@@ -35,7 +35,7 @@ Run setup once:
 ./cursor-sandbox-setup.sh
 ```
 
-On first run, setup will prompt for your workspace directory. You can also put the AppImage in `~/.local/opt/cursor/` beforehand, or set `CURSOR_APPIMAGE` when running setup.
+On first run, setup will prompt for your workspace directory. It also checks `~/Downloads` (or `$XDG_DOWNLOAD_DIR`) for a newer AppImage and offers to install it — both on first run and when re-running setup after an upgrade. You can also put the AppImage in `~/.local/opt/cursor/` beforehand, or set `CURSOR_APPIMAGE` when running setup.
 
 Setup installs the launcher and config outside the workspace (so the sandbox cannot modify them): config and profile in `~/.local/opt/cursor-sandbox/`, launcher at `~/.local/bin/cursor`. Re-run setup after pulling changes to update the installed copy.
 

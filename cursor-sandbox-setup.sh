@@ -25,6 +25,20 @@ for arg in "$@"; do
 done
 CURSOR_APPIMAGE="${CURSOR_APPIMAGE:-$(get_newest_cursor_appimage_in_dir "$APPIMAGE_DIR")}"
 
+# If a newer AppImage is available in Downloads, offer to install it
+if [[ -t 0 ]]; then
+    dl_newest="$(get_newest_cursor_appimage_in_dir "$DOWNLOADS_DIR")"
+    if [[ -n "$dl_newest" && -f "$dl_newest" && "$dl_newest" -nt "${CURSOR_APPIMAGE:-/dev/null}" ]]; then
+        _dl_current_ver="$(get_appimage_version "${CURSOR_APPIMAGE:-}")"
+        _dl_new_ver="$(get_appimage_version "$dl_newest")"
+        echo "Installed: ${_dl_current_ver:-none}  —  Found in Downloads: $_dl_new_ver"
+        read -rp "Install it to $APPIMAGE_DIR and use it? [Y/n] " answer
+        if [[ -z "$answer" || "$answer" =~ ^[Yy] ]]; then
+            CURSOR_APPIMAGE="$(install_appimage_to_dir "$dl_newest")"
+        fi
+    fi
+fi
+
 if [ -z "$WORKSPACE_DIR" ]; then
     read -rp "Enter workspace directory [$HOME/proj]: " WORKSPACE_DIR
     WORKSPACE_DIR="${WORKSPACE_DIR:-$HOME/proj}"
