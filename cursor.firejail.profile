@@ -13,6 +13,7 @@ noblacklist ${HOME}/.cache/Cursor
 noblacklist ${HOME}/.gitconfig
 noblacklist ${HOME}/.cargo
 noblacklist ${HOME}/.rustup
+noblacklist ${HOME}/.nvm
 
 # --- Standard blacklist includes ---
 # These block access to sensitive dirs: ~/.ssh, ~/.gnupg, ~/.pki,
@@ -36,6 +37,10 @@ whitelist ${HOME}/.cargo
 read-only ${HOME}/.cargo
 whitelist ${HOME}/.rustup
 read-only ${HOME}/.rustup
+
+# nvm-managed Node.js (read-only — run nvm install outside sandbox)
+whitelist ${HOME}/.nvm
+read-only ${HOME}/.nvm
 
 # --- Security hardening ---
 
