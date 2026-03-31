@@ -14,6 +14,9 @@ noblacklist ${HOME}/.gitconfig
 noblacklist ${HOME}/.cargo
 noblacklist ${HOME}/.rustup
 noblacklist ${HOME}/.nvm
+noblacklist ${HOME}/.pyenv
+noblacklist ${HOME}/.local/bin
+noblacklist ${HOME}/go
 
 # --- Standard blacklist includes ---
 # These block access to sensitive dirs: ~/.ssh, ~/.gnupg, ~/.pki,
@@ -41,6 +44,18 @@ read-only ${HOME}/.rustup
 # nvm-managed Node.js (read-only — run nvm install outside sandbox)
 whitelist ${HOME}/.nvm
 read-only ${HOME}/.nvm
+
+# pyenv-managed Python (read-only — run pyenv install outside sandbox)
+whitelist ${HOME}/.pyenv
+read-only ${HOME}/.pyenv
+
+# Go toolchain and module cache (read-only — run go install outside sandbox)
+whitelist ${HOME}/go
+read-only ${HOME}/go
+
+# User-installed CLI tools (read-only)
+whitelist ${HOME}/.local/bin
+read-only ${HOME}/.local/bin
 
 # --- Security hardening ---
 
