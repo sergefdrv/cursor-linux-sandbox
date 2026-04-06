@@ -87,11 +87,6 @@ if [ -n "$WAYLAND_DISPLAY" ] && [ -S "$XDG_DIR/$WAYLAND_DISPLAY" ]; then
     FIREJAIL_ARGS+=(--whitelist="$XDG_DIR/$WAYLAND_DISPLAY")
 fi
 
-# D-Bus session bus (needed by Electron for IPC, tray, notifications)
-if [ -S "$XDG_DIR/bus" ]; then
-    FIREJAIL_ARGS+=(--whitelist="$XDG_DIR/bus")
-fi
-
 # Audio server socket (needed for voice prompting / microphone)
 if [ -d "$XDG_DIR/pulse" ]; then
     echo "  Audio:     PulseAudio"
@@ -111,6 +106,20 @@ elif [ -S "/var/run/docker.sock" ]; then
 else
     echo "  Container socket: not found (containers may not work)"
 fi
+
+# ── URL handler (portal OpenURI shim from setup) ─────────────────────
+# Installed by cursor-sandbox-setup.sh as $INSTALL_DIR/bin/xdg-open.
+URL_HANDLER_BIN="$INSTALL_DIR/bin"
+if [[ ! -x "$URL_HANDLER_BIN/xdg-open" ]]; then
+    echo "Warning: $URL_HANDLER_BIN/xdg-open missing — run cursor-sandbox-setup.sh"
+fi
+FIREJAIL_ARGS+=(
+    --whitelist="$URL_HANDLER_BIN"
+    --read-only="$URL_HANDLER_BIN"
+    --env=PATH="$URL_HANDLER_BIN:$PATH"
+    --env=BROWSER="$URL_HANDLER_BIN/xdg-open"
+)
+echo "  URL handler: $URL_HANDLER_BIN/xdg-open"
 
 echo ""
 echo "Launching firejail sandbox..."

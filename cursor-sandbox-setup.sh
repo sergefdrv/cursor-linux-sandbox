@@ -55,6 +55,19 @@ if ! command -v firejail &> /dev/null; then
     exit 1
 fi
 
+if ! command -v xdg-dbus-proxy &> /dev/null; then
+    echo "Warning: xdg-dbus-proxy is not installed"
+    echo "Without it, clicking links in Cursor won't open your browser."
+    echo "Install it with: sudo apt install xdg-dbus-proxy   (Debian/Ubuntu)"
+    echo "                 sudo dnf install xdg-dbus-proxy   (Fedora)"
+    echo "                 sudo pacman -S xdg-desktop-portal (Arch, pulls in proxy)"
+fi
+
+if ! command -v gdbus &> /dev/null; then
+    echo "Warning: gdbus not found (usually from libglib2.0-bin / glib2)"
+    echo "The URL-opening shim needs it to call the XDG desktop portal."
+fi
+
 if [ ! -f "$REPO_PROFILE" ]; then
     echo "Error: Firejail profile not found at: $REPO_PROFILE"
     echo "Ensure cursor.firejail.profile is in the same directory as this script."
@@ -75,6 +88,7 @@ WORKSPACE_DIR="$(readlink -f "$WORKSPACE_DIR")"
 # ── Create required directories ───────────────────────────────────────
 mkdir -p "$APPIMAGE_DIR" \
          "$INSTALL_DIR" \
+         "$INSTALL_DIR/bin" \
          "$HOME/.local/bin" \
          "$HOME/.cursor" \
          "$HOME/.cursor-server" \
@@ -87,6 +101,22 @@ mkdir -p "$APPIMAGE_DIR" \
 cp "$REPO_PROFILE" "$INSTALL_DIR/cursor.firejail.profile"
 cp "$SCRIPT_DIR/cursor-sandbox-common.sh" "$INSTALL_DIR/"
 PROFILE="$INSTALL_DIR/cursor.firejail.profile"
+
+# xdg-open shim: Electron would start the browser inside firejail (fails under
+# seccomp). Call org.freedesktop.portal.OpenURI so the host opens URIs
+# (works with dbus-user filter + xdg-dbus-proxy in the firejail profile).
+cat > "$INSTALL_DIR/bin/xdg-open" <<'WRAPPEREOF'
+#!/bin/bash
+for _u in "$@"; do
+    gdbus call --session \
+        --dest org.freedesktop.portal.Desktop \
+        --object-path /org/freedesktop/portal/desktop \
+        --method org.freedesktop.portal.OpenURI.OpenURI \
+        "" "$_u" "{}" >/dev/null 2>&1 || true
+done
+WRAPPEREOF
+chmod +x "$INSTALL_DIR/bin/xdg-open"
+
 write_cursor_sandbox_config
 CURSOR_SANDBOX_CMD="$HOME/.local/bin/cursor"
 cp "$SCRIPT_DIR/cursor-sandbox.sh" "$CURSOR_SANDBOX_CMD"

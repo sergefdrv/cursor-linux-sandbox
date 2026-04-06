@@ -72,6 +72,21 @@ nonewprivs
 # Drop supplementary groups
 nogroups
 
+# --- D-Bus ---
+# Use xdg-dbus-proxy so xdg-desktop-portal can verify the caller and
+# open URLs / file choosers on the host (direct bus access fails because
+# the portal can't read /proc/<pid>/root of a firejailed process).
+dbus-user filter
+dbus-user.talk org.freedesktop.portal.*
+dbus-user.talk org.freedesktop.Notifications
+dbus-user.talk org.gtk.Notifications
+dbus-user.talk org.freedesktop.secrets
+dbus-user.talk org.kde.StatusNotifierWatcher
+dbus-user.own org.kde.*
+dbus-user.talk com.canonical.Unity
+dbus-user.talk org.freedesktop.FileManager1
+dbus-system none
+
 # --- Network ---
 # Allow network (needed for LSP, extensions, AI features)
 # Restrict to common protocols only

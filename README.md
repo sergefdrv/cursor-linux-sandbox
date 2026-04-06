@@ -21,11 +21,13 @@ Cursor **can** use the display server (X11/Wayland), GPU, audio, network, and re
 - Linux with X11 or Wayland
 - [Cursor AppImage](https://cursor.com) (>= 0.45)
 - firejail
+- xdg-dbus-proxy (used by firejail’s `dbus-user filter` for filtered session D-Bus)
+- `gdbus` (GLib; setup installs an `xdg-open` shim that calls the XDG desktop portal)
 
 ```bash
-sudo apt install firejail    # Debian/Ubuntu
-sudo dnf install firejail    # Fedora/RHEL
-sudo pacman -S firejail      # Arch
+sudo apt install firejail xdg-dbus-proxy libglib2.0-bin    # Debian/Ubuntu
+sudo dnf install firejail xdg-dbus-proxy glib2           # Fedora/RHEL
+sudo pacman -S firejail xdg-desktop-portal glib2         # Arch
 ```
 
 *Note:* You do **not** need `libfuse2`. The launcher uses firejail's `--appimage` flag, which mounts the AppImage directly inside a mount namespace without FUSE.
@@ -40,7 +42,7 @@ Run setup once:
 
 On first run, setup will prompt for your workspace directory. It also checks `$XDG_DOWNLOAD_DIR` (defaults to `~/Downloads`) for a newer AppImage and offers to install it — both on first run and when re-running setup after an upgrade. You can also put the AppImage in `~/.local/opt/cursor/` beforehand, or set `CURSOR_APPIMAGE` when running setup.
 
-Setup installs the launcher and config outside the workspace (so the sandbox cannot modify them): config and profile in `~/.local/opt/cursor-sandbox/`, launcher at `~/.local/bin/cursor`. Re-run setup after pulling changes to update the installed copy.
+Setup installs the launcher and config outside the workspace (so the sandbox cannot modify them): config and profile in `~/.local/opt/cursor-sandbox/`, launcher at `~/.local/bin/cursor`, and `~/.local/opt/cursor-sandbox/bin/xdg-open` (portal shim for opening links on the host). Re-run setup after pulling changes to update the installed copy.
 
 Override defaults:
 
