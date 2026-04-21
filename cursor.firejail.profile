@@ -16,6 +16,7 @@ noblacklist ${HOME}/.rustup
 noblacklist ${HOME}/.nvm
 noblacklist ${HOME}/.pyenv
 noblacklist ${HOME}/.local/bin
+noblacklist ${HOME}/.local/share/pnpm
 noblacklist ${HOME}/go
 
 # --- Standard blacklist includes ---
@@ -52,6 +53,10 @@ read-only ${HOME}/.pyenv
 # Go toolchain and module cache (read-only — run go install outside sandbox)
 whitelist ${HOME}/go
 read-only ${HOME}/go
+
+# pnpm store and global bins (read-only — run pnpm install -g outside sandbox)
+whitelist ${HOME}/.local/share/pnpm
+read-only ${HOME}/.local/share/pnpm
 
 # User-installed CLI tools (read-only)
 whitelist ${HOME}/.local/bin
