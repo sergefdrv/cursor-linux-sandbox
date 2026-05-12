@@ -95,8 +95,13 @@ dbus-user.talk org.freedesktop.Notifications
 dbus-user.talk org.gtk.Notifications
 dbus-user.talk org.freedesktop.secrets
 dbus-user.talk org.kde.StatusNotifierWatcher
-dbus-user.own org.kde.*
-dbus-user.talk com.canonical.Unity
+# No `dbus-user.own org.kde.*`: that grant let the sandbox claim any
+# KDE-namespaced bus name (impersonating kwin/plasma/baloo to other apps).
+# Cursor only needs it to publish a tray item under
+# org.kde.StatusNotifierItem-<pid>-<n>, but firejail's `.own` validator
+# rejects wildcards inside a name element (only whole-element `.*` works),
+# so there's no syntactic way to narrow this. Dropping it removes the tray
+# icon; notifications still flow via org.freedesktop.Notifications.
 dbus-user.talk org.freedesktop.FileManager1
 dbus-system none
 
