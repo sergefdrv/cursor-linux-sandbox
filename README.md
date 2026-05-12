@@ -72,6 +72,31 @@ The launcher passes `--no-sandbox` to Cursor (Electron/Chromium). This disables 
 
 The sandbox exposes common tool directories as **read-only**: `.cargo`, `.rustup`, `.nvm`, `.pyenv`, `~/go`, and `~/.local/bin`. Compilers, interpreters, and CLI tools installed there work inside the sandbox, but installing or updating them (e.g., `nvm install`, `rustup update`, `pip install`) must be done outside the sandbox.
 
+## Site-local overrides
+
+The profile loads an optional `cursor.local` file (firejail's `.local` convention — silently skipped if missing) before any blacklists, so you can add `noblacklist`, `whitelist`, and `read-only` directives without editing the upstream profile. Put your additions in:
+
+```
+~/.local/opt/cursor-sandbox/cursor.local
+```
+
+That directory is created by `cursor-sandbox-setup.sh` and lives outside the sandbox's writable scope, so the override file can't be tampered with from inside Cursor. Each `whitelist` widens what Cursor can see inside `$HOME`; treat the file like editing the main profile and keep the entries minimal.
+
+### Example
+
+Expose a hypothetical tool `foo` — its install dir under `~/.foo` read-only, its state dir read-write:
+
+```
+noblacklist ${HOME}/.foo
+whitelist ${HOME}/.foo
+read-only ${HOME}/.foo
+
+noblacklist ${HOME}/.local/state/foo
+whitelist ${HOME}/.local/state/foo
+```
+
+Same shape works for any CLI plugin Cursor needs to reach: per-user state under `$HOME` (read-write), plus the tool's install location (read-only — install/upgrade from outside the sandbox).
+
 ## Docker / Podman
 
 The launcher detects and passes through your Docker/Podman socket at startup. Inside the sandbox, daemon socket access doesn't work directly -- talk to the host daemon over its API by adding `--remote`:

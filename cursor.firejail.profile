@@ -3,6 +3,14 @@
 # Used by cursor-sandbox.sh.  Workspace and AppImage paths are added
 # via command-line --whitelist arguments at launch time.
 
+# --- Site-local overrides (optional) ---
+# Drop a `cursor.local` next to the installed profile to add
+# noblacklist/whitelist/read-only entries without editing this file.
+# Firejail silently skips `.local` includes that don't exist. Loaded before
+# disable-*.inc so noblacklist directives in the override still take effect.
+# See README ("Site-local overrides") for examples.
+include ${HOME}/.local/opt/cursor-sandbox/cursor.local
+
 # --- Noblacklist (must come before includes) ---
 # Prevent disable-*.inc from blacklisting Cursor's own directories
 noblacklist ${HOME}/.cursor
