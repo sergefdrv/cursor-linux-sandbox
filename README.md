@@ -99,14 +99,22 @@ Same shape works for any CLI plugin Cursor needs to reach: per-user state under 
 
 ## Docker / Podman
 
-The launcher detects and passes through your Docker/Podman socket at startup. Inside the sandbox, daemon socket access doesn't work directly -- talk to the host daemon over its API by adding `--remote`:
+**Off by default.** The host Docker/Podman socket is not exposed inside the sandbox unless you opt in. Anything launched via that socket runs *on the host as your real user, outside the sandbox* — and a process that can talk to the daemon can trivially ask it to run a privileged container with `/` bind-mounted in, which is equivalent to host root (Docker / rootful Podman) or full account access (rootless Podman). Binding the socket therefore defeats the sandbox.
+
+Opt in only if you accept that trade-off:
+
+```bash
+CURSOR_SANDBOX_BIND_CONTAINER_SOCKET=1 cursor
+```
+
+Inside the sandbox, talk to the host daemon over its API by adding `--remote`:
 
 ```bash
 podman --remote ps
 docker --remote info
 ```
 
-Anything you launch this way actually executes on the host as your real user, outside the sandbox.
+To make the opt-in persistent, export the variable in your shell rc.
 
 ## Troubleshooting
 
@@ -114,7 +122,7 @@ Anything you launch this way actually executes on the host as your real user, ou
 
 **Wayland issues** -- the launcher whitelists `$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY`; if your compositor uses a non-default name (or doesn't export `WAYLAND_DISPLAY` at all), the launcher will silently drop Wayland passthrough. Find the real socket with `ls $XDG_RUNTIME_DIR/wayland-*` and re-export `WAYLAND_DISPLAY` accordingly.
 
-**Containers not working** -- look at the launcher's startup output. If it prints `Container socket: not found`, your podman/docker daemon isn't running on the host (start it outside the sandbox). If it does find a socket, make sure your invocation includes `--remote` (e.g., `podman --remote ps`).
+**Containers not working** -- the host socket is not bound by default. Re-launch with `CURSOR_SANDBOX_BIND_CONTAINER_SOCKET=1 cursor` (see the Docker / Podman section for the security trade-off). The launcher's startup output will then say `Podman socket: bound` or `Docker socket: bound`. Once bound, your invocations need `--remote` (e.g., `podman --remote ps`).
 
 **AppArmor errors (Ubuntu 23.10+)** -- if firejail fails with AppArmor-related messages, reload the firejail profile: `sudo apparmor_parser -r /etc/apparmor.d/firejail-default`.
 

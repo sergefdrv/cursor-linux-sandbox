@@ -96,15 +96,25 @@ elif [ -S "$XDG_DIR/pipewire-0" ]; then
     FIREJAIL_ARGS+=(--whitelist="$XDG_DIR/pipewire-0")
 fi
 
-# Mount container socket if available (detected at launch time)
-if [ -S "/run/user/$USER_ID/podman/podman.sock" ]; then
-    echo "  Podman socket: found"
-    FIREJAIL_ARGS+=(--whitelist="/run/user/$USER_ID/podman/podman.sock")
-elif [ -S "/var/run/docker.sock" ]; then
-    echo "  Docker socket: found"
-    FIREJAIL_ARGS+=(--whitelist="/var/run/docker.sock")
-else
-    echo "  Container socket: not found (containers may not work)"
+# Container socket passthrough (host-side daemon access via --remote).
+# OFF by default: a process that can talk to the host daemon socket can ask
+# it to run a privileged container with `/` mounted in -- effectively root on
+# the host (rootful Docker / rootful Podman) or full access to your user
+# account (rootless Podman). That trivially escapes the sandbox.
+#
+# Opt in by exporting CURSOR_SANDBOX_BIND_CONTAINER_SOCKET=1, only if you
+# accept that anything Cursor (or its agents) launches via the socket runs
+# OUTSIDE the sandbox.
+if [ "${CURSOR_SANDBOX_BIND_CONTAINER_SOCKET:-0}" = "1" ]; then
+    if [ -S "/run/user/$USER_ID/podman/podman.sock" ]; then
+        echo "  Podman socket: bound (CURSOR_SANDBOX_BIND_CONTAINER_SOCKET=1)"
+        FIREJAIL_ARGS+=(--whitelist="/run/user/$USER_ID/podman/podman.sock")
+    elif [ -S "/var/run/docker.sock" ]; then
+        echo "  Docker socket: bound (CURSOR_SANDBOX_BIND_CONTAINER_SOCKET=1)"
+        FIREJAIL_ARGS+=(--whitelist="/var/run/docker.sock")
+    else
+        echo "  Container socket: opt-in set but no socket found on host"
+    fi
 fi
 
 # ── URL handler (portal OpenURI shim from setup) ─────────────────────
