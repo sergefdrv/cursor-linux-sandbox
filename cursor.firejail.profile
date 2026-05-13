@@ -19,6 +19,9 @@ noblacklist ${HOME}/.config/Cursor
 noblacklist ${HOME}/.local/share/Cursor
 noblacklist ${HOME}/.cache/Cursor
 noblacklist ${HOME}/.gitconfig
+noblacklist ${HOME}/.config/dconf
+noblacklist ${HOME}/.config/gtk-3.0
+noblacklist ${HOME}/.config/gtk-4.0
 noblacklist ${HOME}/.cargo
 noblacklist ${HOME}/.rustup
 noblacklist ${HOME}/.nvm
@@ -45,6 +48,20 @@ whitelist ${HOME}/.cache/Cursor
 # Git config (visible but read-only)
 whitelist ${HOME}/.gitconfig
 read-only ${HOME}/.gitconfig
+
+# GTK / GNOME desktop preferences. Cursor (Electron/Chromium) reads
+# these via GSettings, which mmaps ~/.config/dconf/user; without these
+# the sandbox falls back to GTK defaults (Adwaita theme, no
+# text-scaling factor, no dark mode, system font ignored). Read-only
+# (disable-common.inc already RO's dconf; we add the explicit RO for
+# the gtk-* dirs) — live updates from gnome-control-center while
+# Cursor is running are not propagated; restart Cursor after changing
+# settings on the host.
+whitelist ${HOME}/.config/dconf
+whitelist ${HOME}/.config/gtk-3.0
+read-only ${HOME}/.config/gtk-3.0
+whitelist ${HOME}/.config/gtk-4.0
+read-only ${HOME}/.config/gtk-4.0
 
 # Toolchain trees. We whitelist these RW (rather than wholesale read-only)
 # so package-manager caches inside them — ~/.cargo/registry, ~/.cargo/git,
