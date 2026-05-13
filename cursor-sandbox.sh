@@ -33,6 +33,14 @@ fi
 
 source "$CONFIG_FILE"
 
+# Ensure package-manager cache directories exist on the host so the
+# writable carve-outs in the profile have something to expose. Idempotent.
+mkdir -p \
+    "$HOME/.cargo/registry" \
+    "$HOME/.npm/_cacache" \
+    "$HOME/.local/share/pnpm/store" \
+    "$HOME/.cache/pip"
+
 # ── Check ~/Downloads for a newer AppImage ────────────────────────────
 dl_newest="$(get_newest_cursor_appimage_in_dir "$DOWNLOADS_DIR")"
 if [ -n "$dl_newest" ] && [ "$dl_newest" -nt "$CURSOR_APPIMAGE" ]; then

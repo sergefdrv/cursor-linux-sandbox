@@ -70,7 +70,11 @@ The launcher passes `--no-sandbox` to Cursor (Electron/Chromium). This disables 
 
 ## Tools
 
-The sandbox exposes common tool directories as **read-only**: `.cargo`, `.rustup`, `.nvm`, `.pyenv`, `~/go`, and `~/.local/bin`. Compilers, interpreters, and CLI tools installed there work inside the sandbox, but installing or updating them (e.g., `nvm install`, `rustup update`, `pip install`) must be done outside the sandbox.
+The sandbox exposes common tool directories: `.rustup`, `.nvm`, `.pyenv`, `~/go`, and `~/.local/bin` are wholesale **read-only**. `.cargo` and `~/.local/share/pnpm` are exposed **read-write** with the binary/config sub-paths individually marked read-only — `~/.cargo/bin`, `~/.cargo/env`, `~/.cargo/config{,.toml}`, `~/.local/share/pnpm/pnpm`, `~/.local/share/pnpm/global`, `~/.local/share/pnpm/nodejs`. Compilers, interpreters, and CLI tools installed there work inside the sandbox, but installing or updating them (e.g., `nvm install`, `rustup update`, `pip install --user`) must be done outside the sandbox.
+
+Package-manager **caches** are read-write and shared with the host: `~/.cargo/registry`, `~/.cargo/git`, `~/.npm/_cacache`, `~/.local/share/pnpm/store`, `~/.cache/pip`. This lets `cargo build`, `npm install`, `pnpm install`, and `pip install` work from within a workspace. Sharing is safe because each tool verifies cache content against a lockfile (cargo SHA-256 vs `Cargo.lock`, npm SRI vs `package-lock.json`, pnpm content-addressed store, pip `--require-hashes`), so a sandboxed process cannot substitute forged cache entries for host or other-project builds.
+
+The `.cargo` and `~/.local/share/pnpm` trees aren't wholesale read-only because firejail's `read-write` directive can't carve a writable hole through a `whitelist`+`read-only` parent (no separate bind mount is made for the sub-path). Inverting the default — RW tree, RO binary sub-paths — is what makes the cache carve-outs actually writable. The trade-off: a sandboxed process can write to non-binary files in those trees that aren't individually RO-listed (e.g. `~/.cargo/.crates.toml`). If you've stored anything sensitive elsewhere under `.cargo`, add a `read-only` entry for it via `cursor.local`.
 
 ## Site-local overrides
 

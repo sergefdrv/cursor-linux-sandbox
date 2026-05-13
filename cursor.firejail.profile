@@ -26,6 +26,8 @@ noblacklist ${HOME}/.pyenv
 noblacklist ${HOME}/.local/bin
 noblacklist ${HOME}/.local/share/pnpm
 noblacklist ${HOME}/go
+noblacklist ${HOME}/.npm
+noblacklist ${HOME}/.cache/pip
 
 # --- Standard blacklist includes ---
 # These block access to sensitive dirs: ~/.ssh, ~/.gnupg, ~/.pki,
@@ -44,9 +46,28 @@ whitelist ${HOME}/.cache/Cursor
 whitelist ${HOME}/.gitconfig
 read-only ${HOME}/.gitconfig
 
-# Rust/Cargo (for cargo, rustc in terminal; read-only — run cargo fetch/rustup outside sandbox)
+# Toolchain trees. We whitelist these RW (rather than wholesale read-only)
+# so package-manager caches inside them — ~/.cargo/registry, ~/.cargo/git,
+# ~/.local/share/pnpm/store — are writable. firejail's `read-write` can't
+# punch a writable hole through a `whitelist`+`read-only` parent (it can't
+# create a separate bind mount for a sub-path), so we invert the default
+# and `read-only` only the binary/config sub-paths we actually need to
+# protect from a sandboxed process replacing them.
+#
+# Sharing the caches with the host is safe because each tool verifies cache
+# content against a lockfile (cargo SHA-256 vs Cargo.lock, npm SRI vs
+# package-lock.json, pnpm content-addressed store, pip --require-hashes),
+# so a sandboxed process cannot forge cache entries for host or other-
+# project builds. With these RW caches `cargo build`, `npm install`,
+# `pnpm install`, and `pip install` work from inside the sandbox.
+
+# Rust/Cargo. disable-common.inc already RO's ~/.cargo/bin and
+# ~/.cargo/env and blacklists ~/.cargo/credentials*. We also RO the
+# config files so a sandboxed process can't plant a malicious cargo
+# config that would run on the next host-side `cargo build`.
 whitelist ${HOME}/.cargo
-read-only ${HOME}/.cargo
+read-only ${HOME}/.cargo/config
+read-only ${HOME}/.cargo/config.toml
 whitelist ${HOME}/.rustup
 read-only ${HOME}/.rustup
 
@@ -62,13 +83,22 @@ read-only ${HOME}/.pyenv
 whitelist ${HOME}/go
 read-only ${HOME}/go
 
-# pnpm store and global bins (read-only — run pnpm install -g outside sandbox)
+# pnpm. Whitelisted RW so the content-addressed store under
+# ~/.local/share/pnpm/store stays writable. RO the pnpm binary itself
+# and managed installs (global packages, pnpm-managed Node.js) so a
+# sandboxed process can't replace them.
 whitelist ${HOME}/.local/share/pnpm
-read-only ${HOME}/.local/share/pnpm
+read-only ${HOME}/.local/share/pnpm/pnpm
+read-only ${HOME}/.local/share/pnpm/global
+read-only ${HOME}/.local/share/pnpm/nodejs
 
 # User-installed CLI tools (read-only)
 whitelist ${HOME}/.local/bin
 read-only ${HOME}/.local/bin
+
+# Package-manager caches not nested inside any other whitelisted tree.
+whitelist ${HOME}/.npm/_cacache
+whitelist ${HOME}/.cache/pip
 
 # --- Security hardening ---
 
