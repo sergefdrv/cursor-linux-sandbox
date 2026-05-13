@@ -23,19 +23,26 @@ for arg in "$@"; do
         break
     fi
 done
+
+# Setup prompts for the workspace dir and the Downloads-upgrade offer;
+# bail out early on a non-tty stdin/stdout rather than silently accepting
+# defaults.
+if [[ ! -t 0 || ! -t 1 ]]; then
+    echo "Error: $0 must be run interactively (stdin and stdout must be a TTY)." >&2
+    exit 1
+fi
+
 CURSOR_APPIMAGE="${CURSOR_APPIMAGE:-$(get_newest_cursor_appimage_in_dir "$APPIMAGE_DIR")}"
 
 # If a newer AppImage is available in Downloads, offer to install it
-if [[ -t 0 ]]; then
-    dl_newest="$(get_newest_cursor_appimage_in_dir "$DOWNLOADS_DIR")"
-    if [[ -n "$dl_newest" && -f "$dl_newest" && "$dl_newest" -nt "${CURSOR_APPIMAGE:-/dev/null}" ]]; then
-        _dl_current_ver="$(get_appimage_version "${CURSOR_APPIMAGE:-}")"
-        _dl_new_ver="$(get_appimage_version "$dl_newest")"
-        echo "Installed: ${_dl_current_ver:-none}  —  Found in Downloads: $_dl_new_ver"
-        read -rp "Install it to $APPIMAGE_DIR and use it? [Y/n] " answer
-        if [[ -z "$answer" || "$answer" =~ ^[Yy] ]]; then
-            CURSOR_APPIMAGE="$(install_appimage_to_dir "$dl_newest")"
-        fi
+dl_newest="$(get_newest_cursor_appimage_in_dir "$DOWNLOADS_DIR")"
+if [[ -n "$dl_newest" && -f "$dl_newest" && "$dl_newest" -nt "${CURSOR_APPIMAGE:-/dev/null}" ]]; then
+    _dl_current_ver="$(get_appimage_version "${CURSOR_APPIMAGE:-}")"
+    _dl_new_ver="$(get_appimage_version "$dl_newest")"
+    echo "Installed: ${_dl_current_ver:-none}  —  Found in Downloads: $_dl_new_ver"
+    read -rp "Install it to $APPIMAGE_DIR and use it? [Y/n] " answer
+    if [[ -z "$answer" || "$answer" =~ ^[Yy] ]]; then
+        CURSOR_APPIMAGE="$(install_appimage_to_dir "$dl_newest")"
     fi
 fi
 
